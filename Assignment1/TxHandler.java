@@ -39,6 +39,12 @@ public class TxHandler {
 		if(!(checkForDuplicateUTXO(tx))){
 				return false;
 		}
+		if(!(checkOutputValues(tx))){
+				return false;
+		}
+		if(!(checkSumValues(tx))){
+				return false;
+		}
 		return true;
 	}
 	
@@ -81,18 +87,68 @@ public class TxHandler {
 			}
 			return true;
 	}
-	
+
+	public boolean checkOutputValues(Transaction tx) {
+			
+			Transaction.Output outv;
+			for(int i=0; i<tx.numOutputs();i++) {
+				outv = tx.getOutput(i);
+				if (outv.value < 0) {
+					return false;
+				}
+			}
+			return true;
+	}
+
+	public boolean checkSumValues(Transaction tx) {
+			UTXO tempsumUTXO;
+			Transaction.Input inp;
+			Transaction.Output outp;
+			double totalinput,totaloutput;
+			totalinput = 0;
+			totaloutput =0;
+
+			if (tx.numInputs() == tx.numOutputs()){
+					
+					for(int i=0; i<tx.numInputs();i++) {
+							inp = tx.getInput(i);
+							tempsumUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
+							outp = ledger.getTxOutput(tempsumUTXO); // returns the transacation output in relation to that UTXO
+							totalinput += outp.value;
+							outp = tx.getOutput(i);
+							totaloutput += outp.value;
+					}
+			}
+			else {
+					for(int i=0; i<tx.numInputs();i++) {
+							outp = tx.getOutput(i);
+							totaloutput += outp.value;
+					}
+			}
+
+			return (totalinput == totaloutput);
+	}
 			
 
-				
-				
+
     /*
      * Handles each epoch by receiving an unordered array of proposed transactions, checking each
      * transaction for correctness, returning a mutually valid array of accepted transactions, and
      * updating the current UTXO pool as appropriate.
-    
-    public Transaction[] handleTxs(Transaction[] possibleTxs) {
-        // IMPLEMENT THIS
-    } */
+   */ 
+    public Transaction[] handleTxs(Transaction[] possibleTxs) { // hanldestxs in an array composed of transcation objects
+			boolean valid = false;
+
+			for (int j =0;j<possibleTxs.length;j++){
+					if (!(isValidTx(possibleTxs[j])){
+							valid = false;
+					}
+					else {
+							valid = true;
+					}
+			}
+
+
+    } 
 
 }
