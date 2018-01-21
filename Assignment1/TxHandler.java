@@ -136,19 +136,32 @@ public class TxHandler {
      * transaction for correctness, returning a mutually valid array of accepted transactions, and
      * updating the current UTXO pool as appropriate.
    */ 
-    public Transaction[] handleTxs(Transaction[] possibleTxs) { // hanldestxs in an array composed of transcation objects
-			boolean valid = false;
-
-			for (int j =0;j<possibleTxs.length;j++){
-					if (!(isValidTx(possibleTxs[j])){
-							valid = false;
-					}
-					else {
-							valid = true;
+    public Transaction[] handleTxs(Transaction[] possibleTxs) { // hanldestxs in an array composed of transcation objects, same for possibleTx
+			ArrayList<Transaction> acceptedTxs = new ArrayList<Transaction>();
+			ArrayList<Transaction> possTxs = new ArrayList<Transaction>(Arrays.asList(possibleTxs));
+			Transaction.Input inp;
+			Transaction[] fTx;
+			
+			UTXO tempUTXO;
+			
+			while (possTxs.size() > 0) {
+					for (int j =0;j<possTxs.size();j++){
+							//Transaction tempTX = new Transaction[possTxs.size()];
+							//Transaction tempTX = possTxs.get(j);
+							if (isValidTx(possTxs.get(j))){
+									acceptedTxs.add(possTxs.get(j));
+									for (int k=0;k<((possTxs.get(j)).numInputs());k++){
+											inp = possTxs.get(j).getInput(k);
+											tempUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
+											ledger.removeUTXO(tempUTXO);
+									}
+									possTxs.remove(j);
+							}
 					}
 			}
 
-
+			fTx = acceptedTxs.toArray(new Transaction[acceptedTxs.size()]);
+			return fTx;
     } 
 
 }
