@@ -50,9 +50,10 @@ public class TxHandler {
 	
 	public boolean checkAllOutputsClaimed(Transaction tx) {
 			UTXO temputxo;	
+			//Transaction.Input in;
 
-			for(int i=0; i<tx.numInputs();i++) {
-				Transaction.Input in = tx.getInput(i);
+			for(Transaction.Input in : tx.getInputs()) {
+				//Input in = tx.getInput(i);
 				temputxo = new UTXO(in.prevTxHash, in.outputIndex);
 				if (!( ledger.contains(temputxo))){
 					return false;
@@ -67,10 +68,13 @@ public class TxHandler {
 			Crypto sigchecker = new Crypto();
 			Transaction.Input in;
 			Transaction.Output out;
+			UTXO sigUTXO;
+
 			for(int i=0; i<tx.numInputs();i++) {
 				in = tx.getInput(i);
-				out = tx.getOutput(i);
-				if (!(sigchecker.verifySignature(out.address, tx.getRawDataToSign(i), in.signature))){
+				sigUTXO = new UTXO(in.prevTxHash, in.outputIndex);
+				out = ledger.getTxOutput(sigUTXO);
+				if (!( sigchecker.verifySignature(out.address, tx.getRawDataToSign(i), in.signature))){
 					return false;
 				}
 			}
@@ -106,24 +110,18 @@ public class TxHandler {
 			Transaction.Output outp;
 			double totalinput,totaloutput;
 			totalinput = 0;
-			totaloutput =0;
+			totaloutput = 0;
 
-			if (tx.numInputs() == tx.numOutputs()){
-					
-					for(int i=0; i<tx.numInputs();i++) {
-							inp = tx.getInput(i);
-							tempsumUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
-							outp = ledger.getTxOutput(tempsumUTXO); // returns the transacation output in relation to that UTXO
-							totalinput += outp.value;
-							outp = tx.getOutput(i);
-							totaloutput += outp.value;
-					}
+			for(int i=0; i<tx.numInputs();i++) {
+						inp = tx.getInput(i);
+						tempsumUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
+						outp = ledger.getTxOutput(tempsumUTXO); // returns the transacation output in relation to that UTXO
+						totalinput += outp.value;
+							
 			}
-			else {
-					for(int i=0; i<tx.numInputs();i++) {
-							outp = tx.getOutput(i);
-							totaloutput += outp.value;
-					}
+			
+			for(Transaction.Output k : tx.getOutputs()){
+				totaloutput += k.value;
 			}
 
 			return (totalinput == totaloutput);
@@ -155,8 +153,8 @@ public class TxHandler {
 											tempUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
 											ledger.removeUTXO(tempUTXO);
 									}
-									possTxs.remove(j);
 							}
+							possTxs.remove(j);
 					}
 			}
 
