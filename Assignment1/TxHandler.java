@@ -78,13 +78,28 @@ public class TxHandler {
 	}
 
 	public boolean checkForDuplicateUTXO(Transaction tx){
-
+			
+			UTXO curutxo;
+			Set<UTXO> usedTxs = new HashSet<>();
+			
+			for(Transaction.Input in : tx.getInputs()) {
+				curutxo = new UTXO(in.prevTxHash, in.outputIndex);
+				if(!(usedTxs.contains(curutxo))){
+						usedTxs.add(curutxo);
+				}
+				else {
+						return false;
+				}
+				
+			}
+			/*
 			ArrayList<Transaction.Input> allInputs = new ArrayList<Transaction.Input>(tx.getInputs());
 			Set<Transaction.Input> setInputs = new HashSet<Transaction.Input>(allInputs);
 
 			if(setInputs.size() < allInputs.size()) {
 					return false;
-			}
+			} 
+			*/
 			return true;
 	}
 
