@@ -33,16 +33,16 @@ public class TxHandler {
 		if(!(checkAllOutputsClaimed(tx))){
 			return false;
 		}
-		if(!(checkAllSignatures(tx))){
+		else if (!(checkAllSignatures(tx))){
 				return false;
 		}		
-		if(!(checkForDuplicateUTXO(tx))){
+		else if(!(checkForDuplicateUTXO(tx))){
 				return false;
 		}
-		if(!(checkOutputValues(tx))){
+		else if(!(checkOutputValues(tx))){
 				return false;
 		}
-		if(!(checkSumValues(tx))){
+		else if(!(checkSumValues(tx))){
 				return false;
 		}
 		return true;
@@ -50,10 +50,7 @@ public class TxHandler {
 	
 	public boolean checkAllOutputsClaimed(Transaction tx) {
 			UTXO temputxo;	
-			//Transaction.Input in;
-
-			for(Transaction.Input in : tx.getInputs()) {
-				//Input in = tx.getInput(i);
+			for(Transaction.Input in : tx.getInputs()) { // cycle through all inputs, assigning each one to the object in which is of class Transaction.Input
 				temputxo = new UTXO(in.prevTxHash, in.outputIndex);
 				if (!( ledger.contains(temputxo))){
 					return false;
@@ -65,16 +62,15 @@ public class TxHandler {
 
 	public boolean checkAllSignatures(Transaction tx){
 			
-			Crypto sigchecker = new Crypto();
-			Transaction.Input in;
 			Transaction.Output out;
+			Transaction.Input in;
 			UTXO sigUTXO;
 
 			for(int i=0; i<tx.numInputs();i++) {
 				in = tx.getInput(i);
 				sigUTXO = new UTXO(in.prevTxHash, in.outputIndex);
 				out = ledger.getTxOutput(sigUTXO);
-				if (!( sigchecker.verifySignature(out.address, tx.getRawDataToSign(i), in.signature))){
+				if (!( Crypto.verifySignature(out.address, tx.getRawDataToSign(i), in.signature))){
 					return false;
 				}
 			}
@@ -123,8 +119,15 @@ public class TxHandler {
 			for(Transaction.Output k : tx.getOutputs()){
 				totaloutput += k.value;
 			}
-
-			return (totalinput == totaloutput);
+			/*
+			if ((Double.compare (totalinput ,totaloutput))==0){
+					return true;
+			}
+			else {
+					return false;
+			}
+			*/
+			return (totalinput >= totaloutput);
 	}
 			
 
