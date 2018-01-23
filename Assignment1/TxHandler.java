@@ -51,8 +51,8 @@ public class TxHandler {
 	public boolean checkAllOutputsClaimed(Transaction tx) {
 			UTXO temputxo;	
 			for(Transaction.Input in : tx.getInputs()) { // cycle through all inputs, assigning each one to the object in which is of class Transaction.Input
-				temputxo = new UTXO(in.prevTxHash, in.outputIndex);
-				if (!( ledger.contains(temputxo))){
+				temputxo = new UTXO(in.prevTxHash, in.outputIndex); // create UTXO
+				if (!( ledger.contains(temputxo))){ // check if its within the UTXOpool
 					return false;
 				}
 			}
@@ -68,9 +68,9 @@ public class TxHandler {
 
 			for(int i=0; i<tx.numInputs();i++) {
 				in = tx.getInput(i);
-				sigUTXO = new UTXO(in.prevTxHash, in.outputIndex);
-				out = ledger.getTxOutput(sigUTXO);
-				if (!( Crypto.verifySignature(out.address, tx.getRawDataToSign(i), in.signature))){
+				sigUTXO = new UTXO(in.prevTxHash, in.outputIndex); //get a UTXO
+				out = ledger.getTxOutput(sigUTXO); // get the output Transaction associated with the UTXO
+				if (!( Crypto.verifySignature(out.address, tx.getRawDataToSign(i), in.signature))){ // pass in the public address from Transacation Output, the Signature which is from Transaction Input, getting the message is from the current transaction
 					return false;
 				}
 			}
@@ -82,7 +82,7 @@ public class TxHandler {
 			UTXO curutxo;
 			Set<UTXO> usedTxs = new HashSet<>();
 			
-			for(Transaction.Input in : tx.getInputs()) {
+			for(Transaction.Input in : tx.getInputs()) { // cycle through each input, create a UTXO, then check if its within the SET pool which doesnt take duplicates and if not adds it
 				curutxo = new UTXO(in.prevTxHash, in.outputIndex);
 				if(!(usedTxs.contains(curutxo))){
 						usedTxs.add(curutxo);
@@ -92,21 +92,13 @@ public class TxHandler {
 				}
 				
 			}
-			/*
-			ArrayList<Transaction.Input> allInputs = new ArrayList<Transaction.Input>(tx.getInputs());
-			Set<Transaction.Input> setInputs = new HashSet<Transaction.Input>(allInputs);
-
-			if(setInputs.size() < allInputs.size()) {
-					return false;
-			} 
-			*/
 			return true;
 	}
 
 	public boolean checkOutputValues(Transaction tx) {
 			
 			Transaction.Output outv;
-			for(int i=0; i<tx.numOutputs();i++) {
+			for(int i=0; i<tx.numOutputs();i++) { // checks if any output values are negative
 				outv = tx.getOutput(i);
 				if (outv.value < 0) {
 					return false;
@@ -125,23 +117,15 @@ public class TxHandler {
 
 			for(int i=0; i<tx.numInputs();i++) {
 						inp = tx.getInput(i);
-						tempsumUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
+						tempsumUTXO = new UTXO(inp.prevTxHash, inp.outputIndex); 
 						outp = ledger.getTxOutput(tempsumUTXO); // returns the transacation output in relation to that UTXO
-						totalinput += outp.value;
+						totalinput += outp.value; // adds together the values associated with the inputs in our current tx
 							
 			}
 			
 			for(Transaction.Output k : tx.getOutputs()){
-				totaloutput += k.value;
+				totaloutput += k.value; // gets the output transaction value
 			}
-			/*
-			if ((Double.compare (totalinput ,totaloutput))==0){
-					return true;
-			}
-			else {
-					return false;
-			}
-			*/
 			return (totalinput >= totaloutput);
 	}
 			
@@ -153,27 +137,36 @@ public class TxHandler {
      * updating the current UTXO pool as appropriate.
    */ 
     public Transaction[] handleTxs(Transaction[] possibleTxs) { // hanldestxs in an array composed of transcation objects, same for possibleTx
+			if (possibleTxs == null){
+					return new Transaction[0]; // return array of 0 transactions if null
+			}
+
 			ArrayList<Transaction> acceptedTxs = new ArrayList<Transaction>();
 			ArrayList<Transaction> possTxs = new ArrayList<Transaction>(Arrays.asList(possibleTxs));
 			Transaction.Input inp;
 			Transaction[] fTx;
-			
+			int j =0;
 			UTXO tempUTXO;
 			
-			while (possTxs.size() > 0) {
-					for (int j =0;j<possTxs.size();j++){
-							//Transaction tempTX = new Transaction[possTxs.size()];
-							//Transaction tempTX = possTxs.get(j);
-							if (isValidTx(possTxs.get(j))){
-									acceptedTxs.add(possTxs.get(j));
-									for (int k=0;k<((possTxs.get(j)).numInputs());k++){
-											inp = possTxs.get(j).getInput(k);
-											tempUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
-											ledger.removeUTXO(tempUTXO);
-									}
+			while (possTxs.size() > j) { // doesnt stop until j is greate then the number of transactions
+					if (isValidTx(possTxs.get(j))){
+							acceptedTxs.add(possTxs.get(j)); // if its a valid transaction add it to the local pool
+							for (int k=0;k<((possTxs.get(j)).numInputs());k++){ // remove the priorly asscoiated Transacation from the current UTXO pool
+									inp = possTxs.get(j).getInput(k);
+									tempUTXO = new UTXO(inp.prevTxHash, inp.outputIndex);
+									ledger.removeUTXO(tempUTXO);
 							}
-							possTxs.remove(j);
+							for( int f =0;f<((possTxs.get(j)).numOutputs());f++){ // add the new valid transaction to the UTXO pool 
+									Transaction.Output out = possTxs.get(j).getOutput(f);
+									UTXO utxo = new UTXO(possTxs.get(j).getHash(), f);
+									ledger.addUTXO(utxo, out);
+							}
+							possTxs.remove(j); // remove from the array list if valid
 					}
+					else {
+							j++; // if not valid add one to move onto the next one
+					}
+					
 			}
 
 			fTx = acceptedTxs.toArray(new Transaction[acceptedTxs.size()]);
