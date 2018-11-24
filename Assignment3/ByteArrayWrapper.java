@@ -16,7 +16,7 @@ public class ByteArrayWrapper {
         if (other == null) {
             return false;
         }
-        if (getClass() != other.getClass()) { - returns run time class - https://www.tutorialspoint.com/java/lang/object_getclass.htm
+        if (getClass() != other.getClass()) { // - returns run time class - https://www.tutorialspoint.com/java/lang/object_getclass.htm
             return false;
         }
 

@@ -40,7 +40,7 @@ public class Transaction {
                 return false;
             }
 
-            Input in = (Input) other; - cast other as an Input object - https://stackoverflow.com/questions/11728356/why-are-parentheses-used-around-a-class-name-in-java
+            Input in = (Input) other; // - cast other as an Input object - https://stackoverflow.com/questions/11728356/why-are-parentheses-used-around-a-class-name-in-java
 
             if (prevTxHash.length != in.prevTxHash.length)
                 return false;
